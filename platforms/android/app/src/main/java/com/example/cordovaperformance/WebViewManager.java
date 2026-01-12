@@ -29,6 +29,9 @@ public class WebViewManager {
     // Performance tracking
     private long preloadStartTime = 0;
     private long preloadEndTime = 0;
+    
+    // Cordova version detection
+    private int cordovaVersion = 0;
 
     private WebViewManager() {
         // Private constructor for singleton
@@ -89,15 +92,24 @@ public class WebViewManager {
             Log.d(TAG, "⏱️  Settings configuration time: " + (settingsEnd - settingsStart) + "ms");
             
             long cordovaInitStart = System.currentTimeMillis();
-            // Create Cordova WebView with Activity
-            SystemWebViewEngine webViewEngine = new SystemWebViewEngine(systemWebView);
-            CordovaInterfaceImpl cordovaInterface = new CordovaInterfaceImpl(activity);
-            cordovaWebView = new CordovaWebViewImpl(webViewEngine);
             
-            // Initialize with required parameters
+            // Detect Cordova version
+            if (cordovaVersion == 0) {
+                cordovaVersion = detectCordovaVersion();
+            }
+            Log.d(TAG, "🔍 Detected Cordova Android version: " + cordovaVersion);
+            
+            // Prepare common objects
             CordovaPreferences preferences = new CordovaPreferences();
+            CordovaInterfaceImpl cordovaInterface = new CordovaInterfaceImpl(activity);
             ArrayList<PluginEntry> pluginEntries = new ArrayList<>();
+            
+            // Create SystemWebViewEngine and CordovaWebView (works for 10.x+)
+            Log.d(TAG, "📦 Initializing Cordova WebView (version " + cordovaVersion + ")");
+            SystemWebViewEngine webViewEngine = new SystemWebViewEngine(systemWebView);
+            cordovaWebView = new CordovaWebViewImpl(webViewEngine);
             cordovaWebView.init(cordovaInterface, pluginEntries, preferences);
+            
             long cordovaInitEnd = System.currentTimeMillis();
             Log.d(TAG, "⏱️  Cordova initialization time: " + (cordovaInitEnd - cordovaInitStart) + "ms");
 
@@ -215,5 +227,29 @@ public class WebViewManager {
      */
     public void destroy() {
         clearWebView();
+    }
+    
+    /**
+     * Detect Cordova Android version
+     * @return Major version number (9, 10, 11, 12, 13, etc.)
+     */
+    private int detectCordovaVersion() {
+        try {
+            // Try to get version from BuildConfig
+            Class<?> buildConfig = Class.forName("org.apache.cordova.BuildConfig");
+            String version = (String) buildConfig.getField("VERSION_NAME").get(null);
+            if (version != null && !version.isEmpty()) {
+                String majorVersion = version.split("\\.")[0];
+                int versionNumber = Integer.parseInt(majorVersion);
+                Log.d(TAG, "✅ Version detected from BuildConfig: " + version + " (major: " + versionNumber + ")");
+                return versionNumber;
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "⚠️  Could not detect version from BuildConfig: " + e.getMessage());
+        }
+        
+        // Default to version 13 if detection fails (current stable)
+        Log.d(TAG, "ℹ️  Using default version: 13");
+        return 13;
     }
 }
