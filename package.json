@@ -1,0 +1,25 @@
+{
+  "name": "cordovaperformance",
+  "displayName": "CordovaPerformance",
+  "version": "1.0.0",
+  "description": "A sample Apache Cordova application for performance testing.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cordova",
+    "android"
+  ],
+  "author": "Apache Cordova Team",
+  "license": "Apache-2.0",
+  "cordova": {
+    "platforms": [
+      "android"
+    ],
+    "plugins": {}
+  },
+  "devDependencies": {
+    "cordova-android": "^13.0.0"
+  }
+}
