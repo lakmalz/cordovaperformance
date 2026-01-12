@@ -3,6 +3,7 @@ package com.example.cordovaperformance;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import androidx.appcompat.app.AppCompatActivity;
@@ -47,12 +48,13 @@ public class LoginActivity extends AppCompatActivity {
         // Get singleton instance
         webViewManager = WebViewManager.getInstance();
 
-        // Get asset URL for the web content
-        String url = "file:///android_asset/www/index.html";
-
         // Preload WebView if not already preloaded
         if (!webViewManager.isPreloaded()) {
-            webViewManager.preloadWebView(this, url);
+            // Option 1: Use default URL (file:///android_asset/www/index.html)
+            webViewManager.preloadWebView(this);
+            
+            // Option 2: Pass custom URL if needed
+            // webViewManager.preloadWebView(this, "file:///android_asset/www/custom.html");
         }
 
         // Show the preloaded WebView in the container for dev purposes
@@ -61,7 +63,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void displayPreloadedWebView() {
         // Get the preloaded WebView
-        SystemWebView webView = webViewManager.getWebView();
+        WebView webView = webViewManager.getSystemWebView();
 
         if (webView != null) {
             // Detach from previous parent if any

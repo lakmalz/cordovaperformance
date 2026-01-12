@@ -22,6 +22,7 @@ package com.example.cordovaperformance;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.FrameLayout;
 
 import org.apache.cordova.*;
@@ -59,7 +60,7 @@ public class MainActivity extends CordovaActivity
 
     private void usePreloadedWebView() {
         // Get the preloaded WebView
-        webView = webViewManager.getWebView();
+        webView = webViewManager.getSystemWebView();
 
         if (webView != null) {
             // Detach from previous parent
@@ -79,7 +80,7 @@ public class MainActivity extends CordovaActivity
             setContentView(container);
 
             // Navigate to home view by default
-            webViewManager.navigateToView("home");
+            webViewManager.navigateToView("settings");
 
             Log.d(TAG, "Preloaded WebView attached to MainActivity");
         }
