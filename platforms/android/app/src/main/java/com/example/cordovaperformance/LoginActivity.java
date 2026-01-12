@@ -2,6 +2,7 @@ package com.example.cordovaperformance;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -15,18 +16,29 @@ import org.apache.cordova.engine.SystemWebView;
  * Shows the preloaded WebView in a FrameLayout for development purposes
  */
 public class LoginActivity extends AppCompatActivity {
-    private static final String TAG = "LoginActivity";
+    private static final String TAG = "LoginPerformance";
     private FrameLayout webViewContainer;
     private Button btnLogin;
     private WebViewManager webViewManager;
+    
+    // Performance tracking
+    private long activityStartTime = 0;
+    private long displayStartTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        activityStartTime = System.currentTimeMillis();
+        Log.d(TAG, "========================================");
+        Log.d(TAG, "🏁 LoginActivity onCreate started");
+        
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
         webViewContainer = findViewById(R.id.webViewContainer);
         btnLogin = findViewById(R.id.btnLogin);
+
+        long layoutInflateTime = System.currentTimeMillis() - activityStartTime;
+        Log.d(TAG, "⏱️  Layout inflation time: " + layoutInflateTime + "ms");
 
         // Initialize and preload WebView
         initializeWebView();
@@ -35,6 +47,7 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d(TAG, "🔄 Navigating to MainActivity...");
                 // Navigate to MainActivity
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
@@ -42,9 +55,16 @@ public class LoginActivity extends AppCompatActivity {
                 // finish();
             }
         });
+        
+        long totalActivityTime = System.currentTimeMillis() - activityStartTime;
+        Log.d(TAG, "✅ LoginActivity onCreate completed: " + totalActivityTime + "ms");
+        Log.d(TAG, "========================================");
     }
 
     private void initializeWebView() {
+        long initStart = System.currentTimeMillis();
+        Log.d(TAG, "🌐 Initializing WebView...");
+        
         // Get singleton instance
         webViewManager = WebViewManager.getInstance();
 
@@ -59,9 +79,22 @@ public class LoginActivity extends AppCompatActivity {
 
         // Show the preloaded WebView in the container for dev purposes
         displayPreloadedWebView();
+        
+        long initEnd = System.currentTimeMillis();
+        long totalWebViewTime = initEnd - initStart;
+        Log.d(TAG, "⏱️  Total WebView initialization + display: " + totalWebViewTime + "ms");
+        
+        // Get and log the preload time from WebViewManager
+        long preloadTime = webViewManager.getPreloadTime();
+        if (preloadTime > 0) {
+            Log.d(TAG, "📈 WebView preload time: " + preloadTime + "ms");
+        }
     }
 
     private void displayPreloadedWebView() {
+        displayStartTime = System.currentTimeMillis();
+        Log.d(TAG, "🎨 Displaying preloaded WebView...");
+        
         // Get the preloaded WebView
         WebView webView = webViewManager.getSystemWebView();
 
@@ -78,6 +111,12 @@ public class LoginActivity extends AppCompatActivity {
 
             // Navigate to home view (default)
             webViewManager.navigateToView("home");
+            
+            long displayTime = System.currentTimeMillis() - displayStartTime;
+            Log.d(TAG, "⏱️  WebView display time: " + displayTime + "ms");
+            Log.d(TAG, "✅ WebView attached and visible");
+        } else {
+            Log.e(TAG, "❌ WebView is null - cannot display");
         }
     }
 

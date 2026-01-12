@@ -34,13 +34,20 @@ import org.apache.cordova.engine.SystemWebView;
  */
 public class MainActivity extends CordovaActivity
 {
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "MainPerformance";
     private WebViewManager webViewManager;
     private SystemWebView webView;
+    
+    // Performance tracking
+    private long activityStartTime = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
+        activityStartTime = System.currentTimeMillis();
+        Log.d(TAG, "========================================");
+        Log.d(TAG, "🏁 MainActivity onCreate started");
+        
         super.onCreate(savedInstanceState);
 
         // Get the singleton WebView manager
@@ -48,24 +55,38 @@ public class MainActivity extends CordovaActivity
 
         // Use the preloaded WebView instead of loading again
         if (webViewManager.isPreloaded()) {
-            Log.d(TAG, "Using preloaded WebView - No reload!");
+            Log.d(TAG, "⚡ Using preloaded WebView - NO RELOAD!");
             usePreloadedWebView();
         } else {
             // Fallback: If somehow WebView wasn't preloaded, load it now
-            Log.w(TAG, "WebView not preloaded, loading now...");
+            Log.w(TAG, "⚠️  WebView not preloaded, loading now...");
+            long fallbackStart = System.currentTimeMillis();
             super.onCreate(savedInstanceState);
             loadUrl(launchUrl);
+            long fallbackTime = System.currentTimeMillis() - fallbackStart;
+            Log.d(TAG, "⏱️  Fallback load time: " + fallbackTime + "ms");
         }
+        
+        long totalActivityTime = System.currentTimeMillis() - activityStartTime;
+        Log.d(TAG, "✅ MainActivity onCreate completed: " + totalActivityTime + "ms");
+        Log.d(TAG, "========================================");
     }
 
     private void usePreloadedWebView() {
+        long reuseStart = System.currentTimeMillis();
+        Log.d(TAG, "🔄 Reusing preloaded WebView...");
+        
         // Get the preloaded WebView
         webView = webViewManager.getSystemWebView();
 
         if (webView != null) {
+            long detachStart = System.currentTimeMillis();
             // Detach from previous parent
             webViewManager.detachWebView();
+            long detachTime = System.currentTimeMillis() - detachStart;
+            Log.d(TAG, "⏱️  Detach time: " + detachTime + "ms");
 
+            long attachStart = System.currentTimeMillis();
             // Create a container for the WebView
             FrameLayout container = new FrameLayout(this);
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
@@ -78,11 +99,26 @@ public class MainActivity extends CordovaActivity
 
             // Set the container as content view
             setContentView(container);
+            long attachTime = System.currentTimeMillis() - attachStart;
+            Log.d(TAG, "⏱️  Attach time: " + attachTime + "ms");
 
             // Navigate to home view by default
             webViewManager.navigateToView("settings");
 
-            Log.d(TAG, "Preloaded WebView attached to MainActivity");
+            long totalReuseTime = System.currentTimeMillis() - reuseStart;
+            Log.d(TAG, "⏱️  Total WebView reuse time: " + totalReuseTime + "ms");
+            Log.d(TAG, "✅ Preloaded WebView attached to MainActivity");
+            
+            // Show performance comparison
+            long preloadTime = webViewManager.getPreloadTime();
+            if (preloadTime > 0) {
+                Log.d(TAG, "📊 Performance Comparison:");
+                Log.d(TAG, "   Initial preload: " + preloadTime + "ms");
+                Log.d(TAG, "   Reuse in MainActivity: " + totalReuseTime + "ms");
+                Log.d(TAG, "   🚀 Performance gain: " + (preloadTime - totalReuseTime) + "ms faster!");
+            }
+        } else {
+            Log.e(TAG, "❌ WebView is null - cannot reuse");
         }
     }
 

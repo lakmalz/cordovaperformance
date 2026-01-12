@@ -1,5 +1,6 @@
 package com.example.cordovaperformance;
 
+import android.util.Log;
 import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,11 +19,16 @@ import java.util.ArrayList;
  * Preloads content and uses fragment identifiers for navigation
  */
 public class WebViewManager {
+    private static final String TAG = "WebViewPerformance";
     private static WebViewManager instance;
     private CordovaWebView cordovaWebView;
     private SystemWebView systemWebView;
     private boolean isPreloaded = false;
     private String baseUrl = "file:///android_asset/www/index.html";
+    
+    // Performance tracking
+    private long preloadStartTime = 0;
+    private long preloadEndTime = 0;
 
     private WebViewManager() {
         // Private constructor for singleton
@@ -49,16 +55,26 @@ public class WebViewManager {
      */
     public void preloadWebView(AppCompatActivity activity, String url) {
         if (isPreloaded && cordovaWebView != null) {
+            Log.d(TAG, "⚡ WebView already preloaded - reusing existing instance");
             return;
         }
+
+        // Start timing
+        preloadStartTime = System.currentTimeMillis();
+        Log.d(TAG, "🚀 Starting WebView preload...");
 
         try {
             // Use custom URL if provided, otherwise use default
             String urlToLoad = (url != null && !url.isEmpty()) ? url : baseUrl;
+            Log.d(TAG, "📄 URL to load: " + urlToLoad);
             
+            long webViewCreateStart = System.currentTimeMillis();
             // Create SystemWebView with Activity context
             systemWebView = new SystemWebView(activity);
+            long webViewCreateEnd = System.currentTimeMillis();
+            Log.d(TAG, "⏱️  WebView creation time: " + (webViewCreateEnd - webViewCreateStart) + "ms");
             
+            long settingsStart = System.currentTimeMillis();
             // Configure WebView settings for performance
             WebSettings settings = systemWebView.getSettings();
             settings.setJavaScriptEnabled(true);
@@ -69,7 +85,10 @@ public class WebViewManager {
             settings.setAllowContentAccess(true);
             settings.setAllowFileAccessFromFileURLs(true);
             settings.setAllowUniversalAccessFromFileURLs(true);
+            long settingsEnd = System.currentTimeMillis();
+            Log.d(TAG, "⏱️  Settings configuration time: " + (settingsEnd - settingsStart) + "ms");
             
+            long cordovaInitStart = System.currentTimeMillis();
             // Create Cordova WebView with Activity
             SystemWebViewEngine webViewEngine = new SystemWebViewEngine(systemWebView);
             CordovaInterfaceImpl cordovaInterface = new CordovaInterfaceImpl(activity);
@@ -79,14 +98,37 @@ public class WebViewManager {
             CordovaPreferences preferences = new CordovaPreferences();
             ArrayList<PluginEntry> pluginEntries = new ArrayList<>();
             cordovaWebView.init(cordovaInterface, pluginEntries, preferences);
+            long cordovaInitEnd = System.currentTimeMillis();
+            Log.d(TAG, "⏱️  Cordova initialization time: " + (cordovaInitEnd - cordovaInitStart) + "ms");
 
+            long loadUrlStart = System.currentTimeMillis();
             // Load the URL
             cordovaWebView.loadUrlIntoView(urlToLoad, false);
+            long loadUrlEnd = System.currentTimeMillis();
+            Log.d(TAG, "⏱️  LoadUrl call time: " + (loadUrlEnd - loadUrlStart) + "ms");
             
             isPreloaded = true;
+            preloadEndTime = System.currentTimeMillis();
+            
+            long totalTime = preloadEndTime - preloadStartTime;
+            Log.d(TAG, "✅ WebView preload completed!");
+            Log.d(TAG, "📊 Total preload time: " + totalTime + "ms");
+            Log.d(TAG, "========================================");
+            
         } catch (Exception e) {
+            Log.e(TAG, "❌ Error during WebView preload", e);
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Get the total preload time in milliseconds
+     */
+    public long getPreloadTime() {
+        if (preloadStartTime > 0 && preloadEndTime > 0) {
+            return preloadEndTime - preloadStartTime;
+        }
+        return 0;
     }
 
     /**
